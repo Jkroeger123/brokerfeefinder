@@ -4,6 +4,9 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import Header from "~/components/header";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
+import { ourFileRouter } from "./api/uploadthing/core";
 
 export const metadata: Metadata = {
   title: "Broker Fee Finder",
@@ -18,9 +21,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${GeistSans.variable}`}>
         <body>
-          {" "}
           <div className="flex min-h-screen flex-col">
             <Header />
+            <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
             {children}
           </div>
         </body>
