@@ -20,6 +20,7 @@ import { useToast } from "~/hooks/use-toast";
 import { deleteListing } from "~/server/listing";
 import { type Image as ImageType } from "@prisma/client";
 import { type ParsedListing } from "~/lib/types/listing";
+import { ImageCarousel } from "./ui/image-carousel";
 
 interface ListingDetailProps {
   listing: ParsedListing; // Type this properly based on your database schema
@@ -68,7 +69,9 @@ export function ListingDetail({ listing, isOwner }: ListingDetailProps) {
                   {listing.status}
                 </Badge>
               </div>
-              <h1 className="mb-2 text-4xl font-normal">{listing.title}</h1>
+              <h1 className="mb-2 text-4xl font-normal">
+                {listing.forRent ? "For Rent" : "For Sale"}
+              </h1>
               <p className="flex items-center text-gray-600">
                 <MapPin className="mr-2 h-4 w-4" />
                 {listing.formattedAddress}
@@ -136,20 +139,8 @@ export function ListingDetail({ listing, isOwner }: ListingDetailProps) {
         </div>
 
         {/* Image Gallery */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {listing?.images?.map((image: ImageType, i: number) => (
-            <div
-              key={image.id}
-              className="relative aspect-[4/3] overflow-hidden rounded-lg"
-            >
-              <Image
-                src={image.url}
-                alt={`Property image ${i + 1}`}
-                fill
-                className="object-cover"
-              />
-            </div>
-          ))}
+        <div className="w-full">
+          <ImageCarousel images={listing.images} viewImages={2} />
         </div>
 
         {/* Property Details */}

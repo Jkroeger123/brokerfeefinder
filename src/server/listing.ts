@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { db as prisma } from "~/server/db";
 import { getOrCreateUser } from "~/server/user";
 import { geocodeAddress, type GeocodeResult } from "~/lib/geocoding";
@@ -58,11 +57,12 @@ export async function createListing(
           "description",
           "userId",
           "status",
+          "forRent",
           "createdAt",
           "updatedAt"
         ) VALUES (
           ${uuid()},
-          ${data.title},
+          ${"title"},
           ${new Prisma.Decimal(data.price)},
           ${new Prisma.Decimal(data.brokerFee)},
           ${data.mlsNumber},
@@ -79,6 +79,7 @@ export async function createListing(
           ${data.description},
           ${user.id},
           'ACTIVE'::"ListingStatus",
+          ${data.forRent},
           NOW(),
           NOW()
         )
@@ -111,7 +112,7 @@ export async function createListing(
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
     );
-    // Revalidate the listings page
+
     revalidatePath("/listings");
 
     return {
@@ -121,9 +122,7 @@ export async function createListing(
   } catch (error) {
     console.error("Failed to create listing:", error);
 
-    // Type guard for Prisma errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Handle specific Prisma errors
       switch (error.code) {
         case "P2002":
           return {
@@ -154,6 +153,176 @@ export async function createListing(
       success: false,
       error: {
         error: "Failed to create listing. Please try again later.",
+      },
+    };
+  }
+}
+
+export async function updateListing(
+  id: string,
+  data: ListingFormData,
+): Promise<CreateListingResult> {
+  try {
+    const user = await getOrCreateUser();
+
+    const existingListing = await prisma.listing.findUnique({
+      where: { id },
+      include: { images: true },
+    });
+
+    if (!existingListing) {
+      return {
+        success: false,
+        error: {
+          error: "Listing not found",
+        },
+      };
+    }
+
+    if (existingListing.userId !== user.id) {
+      return {
+        success: false,
+        error: {
+          error: "Unauthorized to update this listing",
+        },
+      };
+    }
+
+    let geocodeResult: GeocodeResult | null = null;
+    if (data.address !== existingListing.address) {
+      try {
+        geocodeResult = await geocodeAddress(data.address);
+      } catch (error) {
+        console.log(error);
+        return {
+          success: false,
+          error: {
+            error:
+              "Failed to validate address. Please check the address and try again.",
+            field: "address",
+          },
+        };
+      }
+    }
+
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const locationUpdate = geocodeResult
+          ? Prisma.sql`
+              "location" = ST_SetSRID(ST_MakePoint(${geocodeResult.longitude}, ${geocodeResult.latitude}), 4326),
+              "formattedAddress" = ${geocodeResult.formattedAddress},
+              "city" = ${geocodeResult.city},
+              "state" = ${geocodeResult.state},
+              "zipCode" = ${geocodeResult.zipCode},
+            `
+          : Prisma.sql``;
+
+        const rawQuery = await tx.$queryRaw<RawQueryResult>`
+          UPDATE "Listing"
+          SET
+            "title" = ${"title"},
+            "price" = ${new Prisma.Decimal(data.price)},
+            "brokerFee" = ${new Prisma.Decimal(data.brokerFee)},
+            "mlsNumber" = ${data.mlsNumber},
+            "address" = ${data.address},
+            "forRent" = ${data.forRent},
+            ${locationUpdate}
+            "bedrooms" = ${data.bedrooms},
+            "bathrooms" = ${data.bathrooms},
+            "squareFeet" = ${data.squareFeet},
+            "propertyType" = ${data.propertyType}::"PropertyType",
+            "description" = ${data.description},
+            "updatedAt" = NOW()
+          WHERE "id" = ${id} AND "userId" = ${user.id}
+          RETURNING "id"
+        `;
+
+        if (!rawQuery?.[0]?.id) {
+          throw new Error("Failed to update listing record");
+        }
+
+        const existingImageIds = new Set(
+          existingListing.images.map((img) => img.id),
+        );
+        const updatedImageIds = new Set(
+          data.images.filter((img) => "id" in img).map((img) => img.id),
+        );
+
+        const imagesToDelete = [...existingImageIds].filter(
+          (id) => !updatedImageIds.has(id),
+        );
+        if (imagesToDelete.length > 0) {
+          await tx.image.deleteMany({
+            where: {
+              id: {
+                in: imagesToDelete,
+              },
+            },
+          });
+        }
+
+        const newImages = data.images.filter((img) => !("id" in img));
+        if (newImages.length > 0) {
+          await tx.$executeRaw`
+            INSERT INTO "Image" ("id", "url", "listingId")
+            VALUES ${Prisma.join(
+              newImages.map(
+                (image) => Prisma.sql`(${uuid()}, ${image.url}, ${id})`,
+              ),
+            )}
+          `;
+        }
+
+        return id;
+      },
+      {
+        maxWait: 5000,
+        timeout: 10000,
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      },
+    );
+
+    revalidatePath("/listings");
+    revalidatePath(`/listing/${id}`);
+
+    return {
+      success: true,
+      listingId: result,
+    };
+  } catch (error) {
+    console.error("Failed to update listing:", error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      switch (error.code) {
+        case "P2002":
+          return {
+            success: false,
+            error: {
+              error: "A listing with this MLS number already exists.",
+              field: "mlsNumber",
+            },
+          };
+        case "P2003":
+          return {
+            success: false,
+            error: {
+              error: "Invalid user reference.",
+            },
+          };
+        default:
+          return {
+            success: false,
+            error: {
+              error: "Database error occurred. Please try again.",
+            },
+          };
+      }
+    }
+
+    return {
+      success: false,
+      error: {
+        error: "Failed to update listing. Please try again later.",
       },
     };
   }

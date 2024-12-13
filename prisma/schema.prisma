@@ -41,6 +41,7 @@ model Listing {
   squareFeet  Int
   propertyType PropertyType
   description String    @db.Text
+  forRent     Boolean   @default(false)
   
   // Status and Relations
   status      ListingStatus @default(ACTIVE)

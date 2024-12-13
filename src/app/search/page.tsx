@@ -6,7 +6,7 @@ import { type Image } from "@prisma/client";
 import { geocodeAddress, type GeocodeResult } from "~/lib/geocoding";
 
 interface SearchPageProps {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }
 
 async function searchListings(query: string) {
@@ -148,7 +148,8 @@ async function parseListings(
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.q ?? "";
+  const q = (await searchParams).q;
+  const query = q ?? "";
   const rawListings = await searchListings(query);
   const listings = await parseListings(rawListings);
 

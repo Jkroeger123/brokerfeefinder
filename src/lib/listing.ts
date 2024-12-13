@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const listingSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  forRent: z.boolean(),
   price: z.number().min(0, "Price must be positive"),
   brokerFee: z.number().min(0).max(100, "Broker fee must be between 0-100"),
   mlsNumber: z.string().optional(),

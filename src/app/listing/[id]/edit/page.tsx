@@ -1,7 +1,7 @@
 import { db as prisma } from "~/server/db";
-import { ListingDetail } from "~/components/listing-detail";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { EditListingComponent } from "~/components/edit-listing";
 
 async function getListing(id: string) {
   const { userId } = await auth();
@@ -39,7 +39,7 @@ export default async function ListingPage({
   const id = (await params).id;
   const { listing, isOwner } = await getListing(id);
 
-  if (!listing) {
+  if (!listing || !isOwner) {
     notFound();
   }
 
@@ -49,5 +49,5 @@ export default async function ListingPage({
     brokerFee: listing.brokerFee.toString(),
   };
 
-  return <ListingDetail listing={parsedListing} isOwner={isOwner} />;
+  return <EditListingComponent listing={parsedListing} />;
 }

@@ -11,7 +11,7 @@ export default function Header() {
         className="flex items-center gap-2 text-xl font-semibold text-teal-500"
         href="/"
       >
-        BrokerFeeFind
+        BuyerBrokerComp
       </Link>
       <nav className="ml-8 hidden gap-6 lg:flex">
         <SignedIn>
@@ -20,6 +20,12 @@ export default function Header() {
             href="/new-listing"
           >
             Create Listing
+          </Link>
+          <Link
+            className="text-sm font-medium hover:text-teal-500"
+            href="/my-listings"
+          >
+            My Listings
           </Link>
         </SignedIn>
         <Link className="text-sm font-medium hover:text-teal-500" href="#">

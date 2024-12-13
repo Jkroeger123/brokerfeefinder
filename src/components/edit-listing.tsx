@@ -25,14 +25,21 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { createListing } from "~/server/listing";
+import { updateListing } from "~/server/listing";
 import { cn } from "~/lib/utils";
 import { useDebounce } from "~/hooks/use-debounce";
 import { isValidAddress } from "~/lib/geocoding-public";
 import { X, Loader2 } from "lucide-react";
+import { type ParsedListing } from "~/lib/types/listing";
 
-export function CreateListingComponent() {
-  const [images, setImages] = React.useState<{ url: string }[]>([]);
+interface EditListingComponentProps {
+  listing: ParsedListing;
+}
+
+export function EditListingComponent({ listing }: EditListingComponentProps) {
+  const [images, setImages] = React.useState<{ url: string; id?: string }[]>(
+    listing.images.map((img) => ({ url: img.url, id: img.id })),
+  );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isValidatingAddress, setIsValidatingAddress] = React.useState(false);
   const [addressError, setAddressError] = React.useState<string | null>(null);
@@ -45,13 +52,19 @@ export function CreateListingComponent() {
     formState: { errors },
     setValue,
     watch,
-    control,
   } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
-      images: [],
-      propertyType: "HOUSE",
-      brokerFee: 0,
+      price: Number(listing.price),
+      brokerFee: Number(listing.brokerFee),
+      mlsNumber: listing.mlsNumber ?? "",
+      address: listing.address,
+      bedrooms: listing.bedrooms,
+      bathrooms: listing.bathrooms,
+      squareFeet: listing.squareFeet,
+      propertyType: listing.propertyType,
+      description: listing.description,
+      images: listing.images,
     },
   });
 
@@ -60,6 +73,7 @@ export function CreateListingComponent() {
   React.useEffect(() => {
     async function validateAddress() {
       if (!debouncedAddress || debouncedAddress.length < 5) return;
+      if (debouncedAddress === listing.address) return; // Skip validation if address hasn't changed
 
       setIsValidatingAddress(true);
       setAddressError(null);
@@ -70,7 +84,7 @@ export function CreateListingComponent() {
           return;
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
         setAddressError("Failed to validate address");
       } finally {
         setIsValidatingAddress(false);
@@ -78,7 +92,7 @@ export function CreateListingComponent() {
     }
 
     void validateAddress();
-  }, [debouncedAddress]);
+  }, [debouncedAddress, listing.address]);
 
   const onSubmit = async (data: ListingFormData) => {
     if (images.length === 0) {
@@ -94,7 +108,7 @@ export function CreateListingComponent() {
       setIsSubmitting(true);
       data.images = images;
 
-      const result = await createListing(data);
+      const result = await updateListing(listing.id, data);
 
       if (!result.success) {
         if (result.error.field === "address") {
@@ -112,13 +126,14 @@ export function CreateListingComponent() {
 
       toast({
         title: "Success",
-        description: "Listing created successfully",
+        description: "Listing updated successfully",
       });
-      router.push(`/listing/${result.listingId}`);
+      router.push(`/listing/${listing.id}`);
+      router.refresh();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create listing",
+        description: `Failed to update listing ${error instanceof Error && error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -130,17 +145,17 @@ export function CreateListingComponent() {
     <main className="flex-1 bg-gray-50 p-4 lg:p-8">
       <div className="mx-auto max-w-4xl space-y-8">
         <div>
-          <h1 className="mb-2 text-3xl font-semibold">Create New Listing</h1>
+          <h1 className="mb-2 text-3xl font-semibold">Edit Listing</h1>
           <p className="text-gray-600">
-            Add a new property listing with accurate broker fee information.
+            Update your property listing information.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Create Listing</CardTitle>
+            <CardTitle>Edit Listing</CardTitle>
             <CardDescription>
-              Enter all the details for your new property listing.
+              Modify the details of your property listing.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -150,7 +165,10 @@ export function CreateListingComponent() {
                 <Label>Property Images</Label>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                   {images.map((image, idx) => (
-                    <div key={idx} className="group relative aspect-square">
+                    <div
+                      key={image.id ?? idx}
+                      className="group relative aspect-square"
+                    >
                       <img
                         src={image.url}
                         alt={`Property ${idx + 1}`}
@@ -166,7 +184,6 @@ export function CreateListingComponent() {
                             (_, i) => i !== idx,
                           );
                           setImages(filteredImages);
-                          // Update React Hook Form's internal state
                           setValue("images", filteredImages, {
                             shouldValidate: true,
                             shouldDirty: true,
@@ -184,10 +201,9 @@ export function CreateListingComponent() {
                     if (res) {
                       const newImages = res.map((r) => ({ url: r.url }));
                       setImages((prev) => [...prev, ...newImages]);
-                      // Update React Hook Form's internal state
                       setValue("images", [...images, ...newImages], {
-                        shouldValidate: true, // This triggers validation
-                        shouldDirty: true, // Marks the field as "dirty" (changed)
+                        shouldValidate: true,
+                        shouldDirty: true,
                       });
                     }
                   }}
@@ -220,7 +236,9 @@ export function CreateListingComponent() {
                     onValueChange={(value) =>
                       setValue("forRent", value === "rent")
                     }
-                    defaultValue={"sale"}
+                    defaultValue={
+                      listing ? (listing.forRent ? "rent" : "sale") : "sale"
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select listing type" />
@@ -365,7 +383,7 @@ export function CreateListingComponent() {
                       value as ListingFormData["propertyType"],
                     )
                   }
-                  defaultValue="HOUSE"
+                  defaultValue={listing.propertyType}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select property type" />
@@ -408,10 +426,10 @@ export function CreateListingComponent() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    Updating...
                   </>
                 ) : (
-                  "Create Listing"
+                  "Update Listing"
                 )}
               </Button>
             </form>
