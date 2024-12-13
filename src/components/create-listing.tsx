@@ -49,6 +49,7 @@ export function CreateListingComponent() {
   } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
+      forRent: false,
       images: [],
       propertyType: "HOUSE",
       brokerFee: 0,
