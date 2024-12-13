@@ -55,6 +55,7 @@ export function EditListingComponent({ listing }: EditListingComponentProps) {
   } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
+      forRent: listing.forRent,
       price: Number(listing.price),
       brokerFee: Number(listing.brokerFee),
       mlsNumber: listing.mlsNumber ?? "",
@@ -95,6 +96,7 @@ export function EditListingComponent({ listing }: EditListingComponentProps) {
   }, [debouncedAddress, listing.address]);
 
   const onSubmit = async (data: ListingFormData) => {
+    console.log(data);
     if (images.length === 0) {
       toast({
         title: "Error",
