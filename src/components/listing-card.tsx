@@ -126,7 +126,6 @@ export function ListingCard({ listing, className }: ListingCardProps) {
           {listing.forRent ? "For Rent" : "For Sale"}
         </h3>
         <p className="mb-1 text-sm text-gray-600">{listing.formattedAddress}</p>
-        <p className="text-sm text-gray-600">MLS#: {listing.mlsNumber}</p>
       </CardContent>
 
       <CardFooter className="flex gap-4 p-4 pt-0">

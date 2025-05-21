@@ -26,7 +26,7 @@ export default function HomePage() {
     >
       <Input
         className="flex-1 rounded-l-full border-none bg-transparent text-white placeholder-white/50"
-        placeholder="Enter location or MLS number"
+        placeholder="Enter location"
         onChange={(e) => setQuery(e.target.value)}
         value={query}
         // Prevent form submission on empty input
@@ -34,7 +34,7 @@ export default function HomePage() {
         // Disable auto-complete if desired
         autoComplete="off"
         // Better accessibility
-        aria-label="Search location or MLS number"
+        aria-label="Search location"
       />
       <Button
         type="submit"

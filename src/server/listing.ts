@@ -43,7 +43,6 @@ export async function createListing(
           "title",
           "price",
           "brokerFee",
-          "mlsNumber",
           "address",
           "formattedAddress",
           "city",
@@ -65,7 +64,6 @@ export async function createListing(
           ${"title"},
           ${new Prisma.Decimal(data.price)},
           ${new Prisma.Decimal(data.brokerFee)},
-          ${data.mlsNumber},
           ${data.address},
           ${geocodeResult.formattedAddress},
           ${geocodeResult.city},
@@ -124,14 +122,6 @@ export async function createListing(
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       switch (error.code) {
-        case "P2002":
-          return {
-            success: false,
-            error: {
-              error: "A listing with this MLS number already exists.",
-              field: "mlsNumber",
-            },
-          };
         case "P2003":
           return {
             success: false,
@@ -223,7 +213,6 @@ export async function updateListing(
             "title" = ${"title"},
             "price" = ${new Prisma.Decimal(data.price)},
             "brokerFee" = ${new Prisma.Decimal(data.brokerFee)},
-            "mlsNumber" = ${data.mlsNumber},
             "address" = ${data.address},
             "forRent" = ${data.forRent},
             ${locationUpdate}
@@ -294,14 +283,6 @@ export async function updateListing(
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       switch (error.code) {
-        case "P2002":
-          return {
-            success: false,
-            error: {
-              error: "A listing with this MLS number already exists.",
-              field: "mlsNumber",
-            },
-          };
         case "P2003":
           return {
             success: false,

@@ -188,10 +188,6 @@ export function ListingDetail({ listing, isOwner }: ListingDetailProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">MLS Number</p>
-                <p className="font-medium">{listing.mlsNumber}</p>
-              </div>
-              <div>
                 <p className="text-sm text-gray-600">Property Type</p>
                 <p className="font-medium">{listing.propertyType}</p>
               </div>

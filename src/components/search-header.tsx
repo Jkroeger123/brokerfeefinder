@@ -54,11 +54,11 @@ export function SearchHeader({
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by location or MLS#..."
+              placeholder="Search by location..."
               className="flex-1 border-none bg-transparent placeholder-gray-400 shadow-none"
               required
               autoComplete="off"
-              aria-label="Search location or MLS number"
+              aria-label="Search location"
             />
             <Button
               type="submit"

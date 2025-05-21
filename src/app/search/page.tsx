@@ -1,7 +1,6 @@
 import { db as prisma } from "~/server/db";
 import { SearchResults } from "~/components/search-results";
 import type { ListingWithRelations, ParsedListing } from "~/lib/types/listing";
-import { redirect } from "next/navigation";
 import { type Image } from "@prisma/client";
 import { geocodeAddress, type GeocodeResult } from "~/lib/geocoding";
 
@@ -10,20 +9,7 @@ interface SearchPageProps {
 }
 
 async function searchListings(query: string) {
-  const listing = await prisma.listing.findFirst({
-    where: {
-      mlsNumber: {
-        equals: query,
-      },
-    },
-    include: {
-      images: true,
-    },
-  });
-
-  if (listing) {
-    redirect(`/listing/${listing.id}`);
-  }
+  // Removed direct MLS number check and redirect
 
   // Otherwise, search by location
   let location: GeocodeResult;
@@ -78,7 +64,6 @@ async function searchListings(query: string) {
       l.title,
       l.price,
       l."brokerFee",
-      l."mlsNumber",
       l.address,
       l."formattedAddress",
       l.city,
@@ -112,7 +97,6 @@ async function searchListings(query: string) {
       l.title,
       l.price,
       l."brokerFee",
-      l."mlsNumber",
       l.address,
       l."formattedAddress",
       l.city,

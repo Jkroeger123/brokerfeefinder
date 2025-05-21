@@ -58,7 +58,6 @@ export function EditListingComponent({ listing }: EditListingComponentProps) {
       forRent: listing.forRent,
       price: Number(listing.price),
       brokerFee: Number(listing.brokerFee),
-      mlsNumber: listing.mlsNumber ?? "",
       address: listing.address,
       bedrooms: listing.bedrooms,
       bathrooms: listing.bathrooms,
@@ -281,19 +280,6 @@ export function EditListingComponent({ listing }: EditListingComponentProps) {
                   {errors.brokerFee && (
                     <p className="text-sm text-destructive">
                       {errors.brokerFee.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mlsNumber">MLS Number</Label>
-                  <Input
-                    id="mlsNumber"
-                    {...register("mlsNumber")}
-                    placeholder="Enter MLS number"
-                  />
-                  {errors.mlsNumber && (
-                    <p className="text-sm text-destructive">
-                      {errors.mlsNumber.message}
                     </p>
                   )}
                 </div>

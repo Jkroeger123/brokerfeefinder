@@ -20,7 +20,7 @@ export default function HomePage() {
             </h1>
             <p className="text-lg text-white/90">
               Access up-to-date buyer broker fee information for properties
-              across the United States. No more guesswork or outdated MLS data.
+              across the United States. No more guesswork or outdated data.
             </p>
           </div>
           <div className="w-full max-w-2xl">

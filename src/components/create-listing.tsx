@@ -265,19 +265,6 @@ export function CreateListingComponent() {
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mlsNumber">MLS Number</Label>
-                  <Input
-                    id="mlsNumber"
-                    {...register("mlsNumber")}
-                    placeholder="Enter MLS number"
-                  />
-                  {errors.mlsNumber && (
-                    <p className="text-sm text-destructive">
-                      {errors.mlsNumber.message}
-                    </p>
-                  )}
-                </div>
               </div>
 
               {/* Address */}
